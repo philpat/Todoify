@@ -5,15 +5,15 @@ function uuid() {
   });
 }
 
-const todoInput = document.querySelector('#todo-input');
-const errMessage = document.querySelector('#error-message')
-const updateTodoBtn = document.querySelector('#update_todo_btn')
-const db_name = 'todo_storage'
 
 const createTodo = () =>{
-  try{
+  const todoInput = document.querySelector('#todo-input');
+  const errMessage = document.querySelector('#error-message')
   if(!todoInput.value){
-    return showMessage("Please Enter a Todo ")
+    errMessage.innerHTML=`<p>Please ENTER a Todo</p>`
+    errMessage.classList.remove('hidden')
+    errMessage.classList.add('text-red-400', 'text-center', 'text-sm' )
+    return
   } else{
     errMessage.classList.add('hidden')
   }
@@ -23,21 +23,32 @@ const createTodo = () =>{
     created_at: Date.now()
   }
 
-  const todoStorage = getDataBase(db_name)
+  const todoStorage = JSON.parse(localStorage.getItem("todo_storage")) || [];
   const newTodoStorage = [...todoStorage, newTodo]
-  setDataBase(db_name, newTodoStorage)
+  localStorage.setItem("todo_storage", JSON.stringify(newTodoStorage))
   fetchTodo()
-  resetFormInput()
-}catch(error){
-  showMessage(error.message)
-}
+  todoInput.value =""
 }
 
 const fetchTodo = ()=>{
-  const getTodo = getDataBase(db_name)
+  const getTodo = JSON.parse(localStorage.getItem("todo_storage")) || []
   const todoListContainer = document.querySelector("#todo-list-container")
+  const noTodo = getTodo.length === 0 ;
+  if(noTodo){
+    todoListContainer.innerHTML =`<p class="text-center text-slate-500">Todo list is Empty</p>`
+    return
+  }
 
-  const todos = sortTodosByCreated_at(getTodo)
+//   const todos = getTodo.sort((a,b)=>{
+//     if (a.created_at > b.created_at) return -1;
+//     if (a.created_at < b.created_at) return 1;
+//     return 0; 
+// })
+
+  // console.log(
+  //   getTodo.sort((a, b)=>a.created_at < b.created_at ? 1 : a.created_at > b.created_at ? -1 : 0)
+  // )
+  const todos = getTodo.sort((a, b)=>a.created_at < b.created_at ? 1 : a.created_at > b.created_at ? -1 : 0)
   .map((todo) =>{
     return `
     <div class="group flex justify-between bg-white rounded-lg mb-2 p-2 hover:shadow-md">
@@ -63,38 +74,41 @@ const fetchTodo = ()=>{
 }
 
 const deleteTodo=(id)=>{
-  const handleDelete=()=>{
-    const getTodo = getDataBase(db_name)
-  const newTodoStorage = getTodo.filter((todo)=>todo.id !== id)
-  setDataBase(db_name, newTodoStorage)
-  fetchTodo()
-      Swal.fire(
-        'Deleted!',
-        'Todo deleted successfully.',
-        'success'
-      )
-  }
-  showConfirmModal({
+  Swal.fire({
     title: 'Delete Todo?',
     text: "Are you sure you want to delete this Todo!",
     icon: 'warning',
     showCancelButton: true,
     confirmButtonColor: '#3085d6',
     cancelButtonColor: '#d33',
-    confirmButtonText: 'Delete!',
-    cb: handleDelete
+    confirmButtonText: 'Delete!'
+  }).then((result) => {
+    if (result.isConfirmed) {
+  const getTodo = JSON.parse(localStorage.getItem("todo_storage"))
+  const newTodoStorage = getTodo.filter((todo)=>todo.id !== id)
+  localStorage.setItem("todo_storage", JSON.stringify(newTodoStorage))
+  fetchTodo()
+      Swal.fire(
+        'Deleted!',
+        'Todo deleted successfully.',
+        'success'
+      )
+    }
   })
+
   
 }
 
 const handleEditMode =(id)=>{
-  const getTodo = getDataBase(db_name)
+  const getTodo = JSON.parse(localStorage.getItem("todo_storage")) || []
   const todoUpdate = getTodo.find((todo)=>todo.id ===id)
   if(!todoUpdate){
     return
   }
+  const todoInput = document.querySelector('#todo-input');
   todoInput.value = todoUpdate.title
 
+  const updateTodoBtn = document.querySelector('#update_todo_btn')
   updateTodoBtn.classList.remove("hidden")
   updateTodoBtn.setAttribute("update_todo_id", id)
   const addTodoBtn = document.querySelector('#add_todo_btn')
@@ -103,17 +117,21 @@ const handleEditMode =(id)=>{
 
 
 const updateTodo =()=>{
-  
+  const todoInput = document.querySelector('#todo-input');
+  const errMessage = document.querySelector('#error-message')
   if(!todoInput.value){
-    showMessage("Please Provide a Todo to Update")
+    errMessage.innerHTML="Please ENTER a Todo"
+    errMessage.classList.remove('hidden')
+    errMessage.classList.add('text-red-400', 'text-center')
+
     setTimeout(()=>{
       errMessage.classList.add('hidden')
     }, 5000)
-    return
+    
   }
-  
+  const updateTodoBtn = document.querySelector('#update_todo_btn')
   const todoId = updateTodoBtn.getAttribute("update_todo_id")
-  const getTodo = getDataBase(db_name)
+  const getTodo = JSON.parse(localStorage.getItem("todo_storage")) || []
   const updated_todo_db = getTodo.map((todo)=>{
     if(todo.id === todoId){
       return {...todo, title: todoInput.value}
@@ -121,10 +139,9 @@ const updateTodo =()=>{
       return todo
     }
   })
-
-  setDataBase(db_name, updated_todo_db)
+  localStorage.setItem("todo_storage", JSON.stringify(updated_todo_db))
   fetchTodo()
-  resetFormInput()
+  todoInput.value = ""
   updateTodoBtn.classList.add("hidden")
   const addTodoBtn = document.querySelector('#add_todo_btn')
   addTodoBtn.classList.remove("hidden")
