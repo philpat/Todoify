@@ -53,5 +53,16 @@ const showConfirmModal=({title,text,icon,showCancelButton,confirmButtonText, cb}
     if (result.isConfirmed){
       cb()
     }
-  })
+  }) 
 }
+
+const handlePreviewTodo=(id)=>{
+  setDataBase("current_preview_todo_id", id)
+  window.location.href="preview-todo.html"
+}
+
+const getTodoDate =(d)=>{
+  const todoDate = new Date(d).toLocaleString()
+  return todoDate
+}
+getTodoDate()

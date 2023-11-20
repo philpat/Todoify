@@ -20,7 +20,7 @@ const createTodo = () =>{
   const newTodo = {
     id: uuid(),
     title: todoInput.value,
-    created_at: Date.now()
+    created_at: Date.now(),
   }
 
   const todoStorage = getDataBase(db_name)
@@ -36,12 +36,16 @@ const createTodo = () =>{
 const fetchTodo = ()=>{
   const getTodo = getDataBase(db_name)
   const todoListContainer = document.querySelector("#todo-list-container")
-
+  const noTodo = getTodo.length === 0 ;
+  if(noTodo){
+    todoListContainer.innerHTML =`<p class="text-center text-slate-500">Todo list is Empty</p>`
+    return
+  }
   const todos = sortTodosByCreated_at(getTodo)
   .map((todo) =>{
     return `
-    <div class="group flex justify-between bg-white rounded-lg mb-2 p-2 hover:shadow-md">
-        <h3>${todo.title}</h3>
+    <div class="group flex justify-between bg-white rounded-md mb-2 p-4 hover:shadow-md hover:bg-slate-200 text-xl">
+        <button onclick="handlePreviewTodo('${todo.id}')">${todo.title}</button>
         <section class="flex gap-3 hidden group-hover:flex">
           <button onclick="handleEditMode('${todo.id}')">
             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5">
